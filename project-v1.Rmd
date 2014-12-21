@@ -1,0 +1,142 @@
+---
+output: pdf_document
+---
+
+**Executive Summary**
+
+This document will describe the steps done to proper process the data (in this case, we're asked to generate a exponential distribution of about 40 observations). In order to proper analyze the information, 1000 simulations will be run as requested.
+
+
+After we're done with the above, we have to proper answer the folloing points:
+
+1. Show where the distribution is centered at and compare it to the theoretical center of the distribution.
+
+2. Show how variable it is and compare it to the theoretical variance of the distribution.
+
+3. Show that the distribution is approximately normal.
+
+**Analysis**
+
+Let's see the means of each simulation:
+```{r, eval=F}
+set.seed(31)
+lambda <- 0.2
+nsim <- 1000
+data <- array(nsim)
+for (i in 1 : nsim) { ## 1000 simulations
+  data[i] <- data.frame(rexp(40, lambda)) ## 40 observations
+}
+
+meanData <- sapply(data, mean) ## take mean of each of the simulations
+```
+
+**Now, we're going to focus on responding the item 1.**
+
+Let's take a look at the distribution of the means (histogram). See Figure 1.
+
+According to the exponential distribution, its theoretical mean is $\frac{1}{lambda}$, which is 5.0 in the calculation below:
+```{r, echo=TRUE, eval=F}
+1/lambda
+```
+
+The distribution of sample means is centered at (which is 4.993867, in the calculation below):
+```{r, echo=TRUE, eval=F}
+mean(meanData)
+```
+
+The central limit theorem states that given a distribution with a mean $\mu$ and variance $\sigma^2$, the sampling distribution of the mean approaches a normal distribution with a mean $\mu$ and $\frac{\sigma^2}{N}$ as variance, when N - the sample size, increases. Both should converge and they did, as expected.
+
+**Now, we're going to focus on responding the item 2.**
+
+According to the exponential distribution, its theoretical standard deviation is $\Large\frac{1}{lambda}$, which is 5.0 in the calculation below:
+```{r, echo=TRUE, eval=F}
+1/lambda
+```
+
+So, we can conclude that $(\frac{1}{lambda})^2$ is its theoretical variance, which is 25.0 in the calculation below:
+```{r, echo=TRUE, eval=F}
+(1/lambda)^2
+```
+
+The variance of the sampling distribution of the mean is computed as $\frac{\sigma^2}{N}$, where sigma is the standard deviation of the distribution and N is the sample size.
+
+So, the variance of the sample means is 0.625, as we can see below:
+```{r, echo=TRUE, eval=F}
+(1/lambda)^2/40
+```
+
+If the calculate the actual variance, we can see the value of 0.6291041:
+```{r, echo=TRUE, eval=F}
+var(meanData)
+```
+
+The central limit theorem states that given a distribution with a mean $\mu$ and variance $\sigma^2$, the sampling distribution of the mean approaches a normal distribution with a mean $\mu$ and $\frac{\sigma^2}{N}$ as variance, wheh N - the sample size, increases. Both should converge and they did, as expected.
+
+**Now, we're going to focus on responding the item 3.**
+
+Again, the sampling distribution of the mean should approach a normal distribution, according to CLT.
+Let's check this.
+
+The QQ Plot can help us identify if this is likely to be a normal-like distribution. See Figure 2.
+
+For comparison, let's see a normal distribution with the same parameters as this sample. See Figure 3.
+
+If we put all in one graph, we can see they are very similar. See Figure 4.
+
+The red plot denotes the normal distribution. The other one is our sample.
+
+As the sample size grows, the mean distribution will get more 'normal-like' as stated by CLT.
+
+If we compare the quantiles of our sample with a uniform distribution (as requested by the exercise, in red in graph below), the following will happen (See Figure 5):
+
+Despite the fact that the means and other factors are different, we can see the difference in the graph above: a uniform distribution will have points in bothe sides of the quantile slope due to its nature of being uniform (and symmetric as we can see) while a normal one will have the points very close to the line.
+
+
+**Appendix**
+
+Figure 1:
+```{r, echo=TRUE, eval=TRUE, fig.width=6, fig.height=3}
+hist(meanData)
+```
+
+Figure 2:
+```{r, echo=TRUE, eval=TRUE, fig.width=6, fig.height=3.5}
+qqnorm(meanData)
+qqline(meanData) ## creates a line that goes from 2nd to the 4th quantile. 
+
+```
+
+Figure 3:
+```{r, echo=TRUE, eval=TRUE, fig.width=6, fig.height=3.5, fig.align='center'}
+norm<-rnorm(1000, mean=mean(meanData), sd=sd(meanData))
+qqnorm(norm)
+qqline(norm) ## creates a line that goes from 2nd to the 4th quantile. 
+
+```
+
+Figure 4:
+```{r, echo=TRUE, eval=TRUE, fig.width=6, fig.height=3.5}
+q1 <- qqnorm(meanData, plot.it = FALSE)
+q2 <- qqnorm(norm, plot.it = FALSE)
+plot(range(q1$x, q2$x), range(q1$y, q2$y), type = "n", 
+     ylab="Sample Quantities", xlab="Theoretical Quantiles")
+points(q1)
+points(q2, col = "red", pch = 3) ## normal
+qqline(meanData) ## quantile line, going from 0.25 to 0.75 quantile
+qqline(norm) ## quantile line, going from 0.25 to 0.75 quantile
+
+```
+
+Figure 5:
+```{r, echo=TRUE, eval=TRUE, fig.width=6, fig.height=3.5}
+unif<-runif(1000) ## a 1000 uniforms
+q1 <- qqnorm(meanData, plot.it = FALSE)
+q2 <- qqnorm(unif, plot.it = FALSE)
+plot(range(q1$x, q2$x), range(q1$y, q2$y), type = "n", 
+     ylab="Sample Quantities", xlab="Theoretical Quantiles")
+points(q1)
+points(q2, col = "red", pch = 3) ## uniform
+qqline(meanData) ## quantile line, going from 0.25 to 0.75 quantile
+qqline(unif) ## quantile line, going from 0.25 to 0.75 quantile
+
+```
