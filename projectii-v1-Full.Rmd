@@ -1,0 +1,92 @@
+---
+output: pdf_document
+---
+**Executive Summary**
+
+We're going to analyze the ToothGrowth dataset.
+There are 3 variables (len, supp, dose) and 60 observations.
+
+The description of the dataset from R hep file: The response is the length of odontoblasts (teeth) in each of 10 guinea pigs at each of three dose levels of Vitamin C (0.5, 1, and 2 mg) with each of two delivery methods (orange juice or ascorbic acid).
+
+The description of the 3 variables are:
+
+[,1]   len	 numeric	 Tooth length
+
+[,2]	 supp	 factor	 Supplement type (VC or OJ).
+
+[,3]	 dose	 numeric	 Dose in milligrams.
+
+
+**Analysis**
+
+A basic summary of the data is below:
+
+```{r echo=TRUE, eval=TRUE}
+data(ToothGrowth)
+summary(ToothGrowth)
+```
+
+Let's take a more in-depth look into this data.
+```{r echo=TRUE, eval=TRUE}
+library(dplyr)
+agg<-group_by(ToothGrowth, supp, dose)
+agg_sum<-summarise(agg, len_mean=mean(len), sd=sd(len))
+agg_sum
+```
+
+We've just grouped the data by supplement type and dose and took the mean of the len of the tooth measured by these groups. We've also calculate the standard deviation for each group.
+
+Doing a simple linear regression calculation, we get the following:
+
+```{r echo=TRUE, eval=TRUE}
+summary(with(ToothGrowth, lm(len~ supp + dose)))
+```
+
+We can see the length of tooth measured are positively influenced by supplement type OJ (orange juice, the intercept) and dose, and negatively influenced by supplement type VC (ascorbic acid) when compared to the intercept (which is orange juice).
+
+Let's take the following null hypothesis:
+- Dose doesn't influence the growth of teeth.
+
+```{r echo=TRUE, eval=TRUE}
+summarise(agg, len_mean=mean(len), sd=sd(len), num=n())
+```
+
+**Since we have a low number of observations for each case, we're going to adopt a T-statistic approach instead of Z-statistic.**
+
+```{r echo=TRUE, eval=TRUE}
+t.test(len ~ dose, data=filter(ToothGrowth, dose<=1.0))$conf.int
+t.test(len ~ dose, data=filter(ToothGrowth, dose>=1.0))$conf.int
+
+```
+
+As we can see, the 95% confidence interval for the mean between doses 0.5mg and 1.0mg are between -11.983 and -6.276. 
+Similarly, the 95% confidence interval for the mean between doses 1.0mg and 2.0mg are between -8.996 and -3.733. 
+
+We can conclude, since we don't have zero included in the 95% confidence interval we can reject the null hypothesis, and state that dose influences the growth of the teeth.
+
+With regards to the supplement variable, let's assume the following null hypothesis:
+- Supplement type does not influence the growth of the teeth.
+
+```{r echo=TRUE, eval=TRUE}
+t.test(len ~ supp, data=ToothGrowth)
+```
+
+In fact, since the 95% confidence interval includes 0 (-0.171, 7.571), and we have a p-value about 0.06, we cannot reject the null hypothesis. Let's investigate deeper and see why is this.
+
+Trying to hold the variable dose constant:
+
+```{r echo=TRUE, eval=TRUE}
+t.test(len ~ supp, dose==0.5, data=ToothGrowth)
+t.test(len ~ supp, dose==1.0, data=ToothGrowth)
+t.test(len ~ supp, dose==2.0, data=ToothGrowth)
+```
+
+We can realize that for 0.5mg and 1.0mg, the 95% confidence intervals do not include zero and p-values are very low (below 0.007, 0.7%). So for these cases, we reject the null hypothesis.
+
+This is not the case when dose is equal to 2.0mg. In this case, the supplement type doesnt make any difference. The means are similar, p-value is about 10% (a high value). So, for dose equal 2.0mg we cannot reject the null hypothesis.
+
+**Conclusion**
+
+We can conclude that for lower doses (0.5mg and 1.0mg), the supplement type makes difference and influences teeth growth. Similarly, the dose itself is highly relevant and highly correlated with teeth growth as well.
+But for higher doses, the supplement type doesnt make much difference and doesnt influence the growth of the teeth of the pigs, so we only account for the dose itself (which remains relevant).
+Due to the low number of observations for each case, we assumed a T distribution instead of a normal one (Z).
